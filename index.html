@@ -849,56 +849,60 @@ function drawNpcMark(c,n,cx,cy,t){
   else{px(c,mx-3,my-2,7,12,'#5a3d00');px(c,mx-2,my-1,5,10,'#ffd23f');px(c,mx-1,my,3,5,'#5a3d00');px(c,mx-1,my+7,3,1,'#5a3d00');}
 }
 
-/* ---- Di dalam bus (dipakai skenario Pak Joko "A traffic jam") ---- */
+/* ---- Di dalam bus (dipakai skenario Pak Joko "A traffic jam") — memakai aset & warna Tiny Realm ---- */
 function drawBusInterior(c,dt){
-  busT+=dt;const t=busT;
-  px(c,0,0,VW,VH,'#2b2330');
-  /* langit + kota */
-  const g=c.createLinearGradient(0,18,0,72);g.addColorStop(0,'#8fc1e6');g.addColorStop(1,'#dbe9ee');c.fillStyle=g;c.fillRect(14,18,292,60);
-  const bl=[[20,38,22],[46,30,16],[66,44,26],[96,34,18],[120,48,24],[150,36,20],[176,42,28],[208,32,18],[232,46,24],[262,36,22],[286,44,20]];
-  bl.forEach(([x,h,w],i)=>{px(c,x,78-h,w,h,i%2?'#8a9bb0':'#7c8ea5');for(let yy=78-h+4;yy<76;yy+=6)for(let xx=x+3;xx<x+w-3;xx+=6)px(c,xx,yy,2,2,'#c9d8e4');});
-  /* jalan */
-  px(c,14,78,292,22,'#585a63');
-  c.fillStyle='#585a63';c.beginPath();c.moveTo(14,78);c.lineTo(306,78);c.lineTo(306,100);c.lineTo(14,100);c.fill();
-  for(let i=0;i<9;i++){const x=24+i*34;px(c,x,89,16,2,'#d8d2a0');}
-  /* mobil macet (hampir tidak bergerak) */
-  const cars=[[34,80,26,'#c4573a'],[78,83,30,'#3a6fa8'],[130,80,26,'#e0c44a'],[176,84,32,'#4a8a5a'],[232,80,28,'#8a5aa8'],[268,83,30,'#d8d8dc']];
-  cars.forEach(([x,y,w,col],i)=>{
-    const by=y+Math.round(Math.sin(t*1.3+i)*.6);
-    px(c,x,by,w,12,col);px(c,x+3,by-5,w-6,6,shade(col,.8));px(c,x+5,by-4,w-10,4,'#cfe6f2');
-    const on=((Math.floor(t*0.6+i)%5)!==4);
-    px(c,x+1,by+7,4,2,on?'#ff3b30':'#7a1f1a');px(c,x+w-5,by+7,4,2,on?'#ff3b30':'#7a1f1a');
-    px(c,x+2,by+12,5,2,'#1b111b');px(c,x+w-7,by+12,5,2,'#1b111b');
+  busT+=dt;const t=busT,O='#1b111b';
+  /* dinding dalam bus (kayu) */
+  px(c,0,0,VW,VH,'#9e6035');
+  /* kaca depan: pemandangan asli dari peta game */
+  c.drawImage(staticLayer,170,372,292,62,14,20,292,62);
+  [[30,36],[96,38],[180,36],[250,38]].forEach(([x,y])=>spr(c,'bush',x,y));
+  /* mobil macet bergaya Tiny Realm (hampir tidak bergerak) */
+  const cars=[[22,'#c8423a'],[72,'#4a8fd6'],[120,'#f6c26b'],[172,'#7be06a'],[222,'#b07ad8'],[266,'#e6fdff']];
+  cars.forEach(([x,col],i)=>{
+    const by=60+Math.round(Math.sin(t*1.2+i)*.6)+(i%2?3:0);
+    px(c,x-1,by+2,32,14,O);px(c,x+3,by-3,24,7,O);
+    px(c,x,by+3,30,12,col);px(c,x,by+3,30,2,shade(col,1.25));
+    px(c,x+4,by-2,22,6,shade(col,.85));px(c,x+6,by-1,18,4,'#adf7ff');
+    const on=(Math.floor(t*.7+i)%5)!==4;
+    px(c,x+1,by+9,5,3,on?'#ff3b30':'#8a2420');px(c,x+24,by+9,5,3,on?'#ff3b30':'#8a2420');
+    px(c,x+3,by+14,6,3,O);px(c,x+21,by+14,6,3,O);
   });
-  /* bingkai kaca depan */
-  px(c,0,14,14,100,'#3a3040');px(c,306,14,14,100,'#3a3040');px(c,151,14,6,86,'#3a3040');px(c,0,14,VW,5,'#3a3040');
-  /* langit-langit + lampu */
-  px(c,0,0,VW,14,'#463b52');for(let x=30;x<VW;x+=70){px(c,x,4,34,3,'#f6efc0');}
+  /* bingkai kaca (kayu bergaris tepi gelap) */
+  const fr=(x,y,w,h)=>{px(c,x,y,w,h,O);px(c,x+1,y+1,w-2,h-2,'#b8642a');px(c,x+1,y+1,w-2,1,'#d8934f');};
+  fr(0,14,14,70);fr(306,14,14,70);fr(150,14,8,70);fr(0,14,VW,7);fr(0,80,VW,5);
+  /* langit-langit oranye seperti badan bus + lampu */
+  px(c,0,0,VW,14,O);px(c,0,0,VW,13,'#e8923f');px(c,0,0,VW,2,'#f6c26b');px(c,0,10,VW,3,'#c8423a');
+  for(let x=34;x<VW;x+=76){px(c,x,3,30,5,O);px(c,x+1,4,28,3,'#fff2a6');}
   /* dasbor */
-  px(c,0,100,VW,16,'#2a2530');px(c,0,100,VW,2,'#524a5e');
-  px(c,214,103,18,9,'#14111a');px(c,218,106,10,3,'#7fe0a0');
-  /* lantai */
-  px(c,0,116,VW,76,'#6b5a4a');px(c,134,116,52,76,'#8a7765');px(c,134,116,2,76,'#4a3d31');px(c,184,116,2,76,'#4a3d31');
-  /* baris kursi depan (kosong) */
-  const seat=(x,y,w,h)=>{px(c,x,y,w,h,'#a8503a');px(c,x,y,w,3,'#c4694e');px(c,x+2,y+h-2,w-4,2,'#7a3626');};
-  [22,198].forEach(x=>seat(x,132,30,18));seat(58,132,30,18);
-  /* pak Joko di kursi pengemudi (dari belakang) */
-  drawChar(c,IMG.joko,250,152,'up',false,t,0);
-  seat(236,148,28,14);
-  c.strokeStyle='#1b111b';c.lineWidth=2;c.beginPath();c.arc(232,114,7,0,Math.PI*2);c.stroke();
-  /* pemain duduk di baris tengah kiri (dari belakang) */
-  drawChar(c,IMG.char1,73,176,'up',false,t,0);
-  seat(58,172,30,20);
-  [22,198,236].forEach(x=>seat(x,172,30,20));
+  px(c,0,84,VW,16,O);px(c,0,85,VW,14,'#3a2a36');px(c,0,85,VW,1,'#6a5560');
+  px(c,212,88,20,9,O);px(c,213,89,18,7,'#14111a');px(c,215,91,8,2,'#7be06a');px(c,225,91,4,2,'#ffd23f');
+  /* lantai: papan kayu dari tileset */
+  for(let x=0;x<VW;x+=64){for(let y=100;y<VH;y+=34){c.drawImage(IMG.tiles,8,292,64,34,x,y,64,34);}}
+  px(c,0,100,VW,2,O);
+  /* lorong tengah */
+  px(c,136,102,48,90,'rgba(27,17,27,.28)');px(c,136,102,1,90,O);px(c,183,102,1,90,O);
+  /* kursi = bangku kayu dari tileset (tampak dari belakang) */
+  const seat=(x,y)=>{spr(c,'bench2',x,y);};
+  [22,56,200].forEach(x=>seat(x,126));
+  /* Pak Joko di kursi pengemudi (dari belakang) */
+  drawChar(c,IMG.joko,250,150,'up',false,t,0);
+  px(c,238,150,24,2,'rgba(27,17,27,.35)');seat(234,148);
+  c.strokeStyle=O;c.lineWidth=2;c.beginPath();c.arc(232,106,7,0,Math.PI*2);c.stroke();
+  /* pemain duduk di baris tengah kiri */
+  drawChar(c,IMG.char1,72,172,'up',false,t,0);
+  seat(56,168);
+  [22,200,234].forEach(x=>seat(x,168));
+  /* koper & tas di lorong belakang */
+  spr(c,'crate',160,176);spr(c,'barrel',120,172);
   /* pegangan */
-  px(c,0,20,VW,2,'#c8c8d0');
-  for(let x=40;x<VW;x+=60){px(c,x,22,1,10,'#c8c8d0');px(c,x-3,32,7,3,'#e0c44a');}
+  px(c,0,22,VW,2,'#c8c8d0');
+  for(let x=44;x<VW;x+=76){px(c,x,24,1,10,'#c8c8d0');px(c,x-3,34,7,3,'#ffd23f');}
   /* teks */
-  c.font='bold 8px monospace';c.textAlign='left';c.textBaseline='top';c.lineWidth=3;c.strokeStyle='#1b111b';c.fillStyle='#fff';
-  c.strokeText('DI DALAM BUS',6,6);c.fillText('DI DALAM BUS',6,6);
+  c.font='bold 8px monospace';c.textAlign='left';c.textBaseline='top';c.lineWidth=3;c.strokeStyle=O;c.fillStyle='#fff';
+  c.strokeText('DI DALAM BUS',6,3);c.fillText('DI DALAM BUS',6,3);
   const a=1-Math.min(1,t*3);if(a>0){c.globalAlpha=a;px(c,0,0,VW,VH,'#000');c.globalAlpha=1;}
 }
-
 function render(dt){
   if(!assetsReady)return;
   if(inBus){drawBusInterior(ctx,dt);return;}
