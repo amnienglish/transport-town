@@ -241,7 +241,7 @@ const NPCS = [
             why:"Fasten your seat belt = pasang sabuk pengaman.", vocab:["fasten","seat belt"] }
         ],
         end:{say:"Thank you. Enjoy the ride!", id:"Terima kasih. Selamat menikmati perjalanan!"} },
-      { title:"A traffic jam",
+      { title:"A traffic jam", onBus:true,
         steps:[
           { type:"choice", say:"Ladies and gentlemen, we are stuck in a traffic jam. We will be about twenty minutes late.", id:"Para penumpang, kita terjebak macet. Kita akan terlambat sekitar dua puluh menit.",
             options:[
@@ -597,7 +597,7 @@ $('bListen').onclick=()=>{
    10. DIALOG
    ===================================================================== */
 const dlgEl=$('dialog'),dlgName=$('dlgName'),dlgText=$('dlgText'),dlgId=$('dlgId'),dlgBody=$('dlgBody');
-let dlg=null,typer=null;
+let dlg=null,typer=null,inBus=false,busT=0;
 const scenarioFor=n=>n.scenarios[(S.doneCount[n.id]||0)%n.scenarios.length];
 function typeText(text){
   clearInterval(typer);typer=null;let i=0;dlgText.textContent='';
@@ -637,6 +637,7 @@ function openDialog(npc){
   }
   dlg={npc,sc:scenarioFor(npc.data),i:0,tries:0,line:''};
   dlg.sc.n=((S.doneCount[npc.data.id]||0)%npc.data.scenarios.length)+1;
+  if(dlg.sc.onBus){inBus=true;busT=0;}
   renderStep();
 }
 function renderStep(){
@@ -719,7 +720,7 @@ let summaryShownDay=0;
 function closeDialog(){
   clearInterval(typer);typer=null;stopSpeech();
   if(dlg&&dlg.npc)dlg.npc.lookTimer=2;
-  dlg=null;dlgEl.hidden=true;document.body.classList.remove('indlg');mode='play';updateHUD();
+  inBus=false;dlg=null;dlgEl.hidden=true;document.body.classList.remove('indlg');mode='play';updateHUD();
   if(NPCS.every(n=>S.doneToday[n.id])&&summaryShownDay!==S.day){summaryShownDay=S.day;openDaySummary();}
 }
 
@@ -847,8 +848,60 @@ function drawNpcMark(c,n,cx,cy,t){
   if(done){px(c,mx-4,my-1,9,8,'#1d3a14');px(c,mx-3,my,7,6,'#7be06a');px(c,mx-2,my+3,1,1,'#1d3a14');px(c,mx-1,my+4,1,1,'#1d3a14');px(c,mx,my+3,1,1,'#1d3a14');px(c,mx+1,my+2,1,1,'#1d3a14');px(c,mx+2,my+1,1,1,'#1d3a14');}
   else{px(c,mx-3,my-2,7,12,'#5a3d00');px(c,mx-2,my-1,5,10,'#ffd23f');px(c,mx-1,my,3,5,'#5a3d00');px(c,mx-1,my+7,3,1,'#5a3d00');}
 }
+
+/* ---- Di dalam bus (dipakai skenario Pak Joko "A traffic jam") ---- */
+function drawBusInterior(c,dt){
+  busT+=dt;const t=busT;
+  px(c,0,0,VW,VH,'#2b2330');
+  /* langit + kota */
+  const g=c.createLinearGradient(0,18,0,72);g.addColorStop(0,'#8fc1e6');g.addColorStop(1,'#dbe9ee');c.fillStyle=g;c.fillRect(14,18,292,60);
+  const bl=[[20,38,22],[46,30,16],[66,44,26],[96,34,18],[120,48,24],[150,36,20],[176,42,28],[208,32,18],[232,46,24],[262,36,22],[286,44,20]];
+  bl.forEach(([x,h,w],i)=>{px(c,x,78-h,w,h,i%2?'#8a9bb0':'#7c8ea5');for(let yy=78-h+4;yy<76;yy+=6)for(let xx=x+3;xx<x+w-3;xx+=6)px(c,xx,yy,2,2,'#c9d8e4');});
+  /* jalan */
+  px(c,14,78,292,22,'#585a63');
+  c.fillStyle='#585a63';c.beginPath();c.moveTo(14,78);c.lineTo(306,78);c.lineTo(306,100);c.lineTo(14,100);c.fill();
+  for(let i=0;i<9;i++){const x=24+i*34;px(c,x,89,16,2,'#d8d2a0');}
+  /* mobil macet (hampir tidak bergerak) */
+  const cars=[[34,80,26,'#c4573a'],[78,83,30,'#3a6fa8'],[130,80,26,'#e0c44a'],[176,84,32,'#4a8a5a'],[232,80,28,'#8a5aa8'],[268,83,30,'#d8d8dc']];
+  cars.forEach(([x,y,w,col],i)=>{
+    const by=y+Math.round(Math.sin(t*1.3+i)*.6);
+    px(c,x,by,w,12,col);px(c,x+3,by-5,w-6,6,shade(col,.8));px(c,x+5,by-4,w-10,4,'#cfe6f2');
+    const on=((Math.floor(t*0.6+i)%5)!==4);
+    px(c,x+1,by+7,4,2,on?'#ff3b30':'#7a1f1a');px(c,x+w-5,by+7,4,2,on?'#ff3b30':'#7a1f1a');
+    px(c,x+2,by+12,5,2,'#1b111b');px(c,x+w-7,by+12,5,2,'#1b111b');
+  });
+  /* bingkai kaca depan */
+  px(c,0,14,14,100,'#3a3040');px(c,306,14,14,100,'#3a3040');px(c,151,14,6,86,'#3a3040');px(c,0,14,VW,5,'#3a3040');
+  /* langit-langit + lampu */
+  px(c,0,0,VW,14,'#463b52');for(let x=30;x<VW;x+=70){px(c,x,4,34,3,'#f6efc0');}
+  /* dasbor */
+  px(c,0,100,VW,16,'#2a2530');px(c,0,100,VW,2,'#524a5e');
+  px(c,214,103,18,9,'#14111a');px(c,218,106,10,3,'#7fe0a0');
+  /* lantai */
+  px(c,0,116,VW,76,'#6b5a4a');px(c,134,116,52,76,'#8a7765');px(c,134,116,2,76,'#4a3d31');px(c,184,116,2,76,'#4a3d31');
+  /* baris kursi depan (kosong) */
+  const seat=(x,y,w,h)=>{px(c,x,y,w,h,'#a8503a');px(c,x,y,w,3,'#c4694e');px(c,x+2,y+h-2,w-4,2,'#7a3626');};
+  [22,198].forEach(x=>seat(x,132,30,18));seat(58,132,30,18);
+  /* pak Joko di kursi pengemudi (dari belakang) */
+  drawChar(c,IMG.joko,250,152,'up',false,t,0);
+  seat(236,148,28,14);
+  c.strokeStyle='#1b111b';c.lineWidth=2;c.beginPath();c.arc(232,114,7,0,Math.PI*2);c.stroke();
+  /* pemain duduk di baris tengah kiri (dari belakang) */
+  drawChar(c,IMG.char1,73,176,'up',false,t,0);
+  seat(58,172,30,20);
+  [22,198,236].forEach(x=>seat(x,172,30,20));
+  /* pegangan */
+  px(c,0,20,VW,2,'#c8c8d0');
+  for(let x=40;x<VW;x+=60){px(c,x,22,1,10,'#c8c8d0');px(c,x-3,32,7,3,'#e0c44a');}
+  /* teks */
+  c.font='bold 8px monospace';c.textAlign='left';c.textBaseline='top';c.lineWidth=3;c.strokeStyle='#1b111b';c.fillStyle='#fff';
+  c.strokeText('DI DALAM BUS',6,6);c.fillText('DI DALAM BUS',6,6);
+  const a=1-Math.min(1,t*3);if(a>0){c.globalAlpha=a;px(c,0,0,VW,VH,'#000');c.globalAlpha=1;}
+}
+
 function render(dt){
   if(!assetsReady)return;
+  if(inBus){drawBusInterior(ctx,dt);return;}
   const t=T_,c=ctx;
   const tx=clamp(player.x-VW/2,0,MW*T-VW),ty=clamp(player.y-VH/2-8,0,MH*T-VH);
   if(!cam.init){cam.x=tx;cam.y=ty;cam.init=true;}
